@@ -57,17 +57,16 @@ class ProjectController extends Controller
         $newProject->save();
 
         $newProject->slug = $newProject->slug . '-' . $newProject->id;
-        $newProject->save();
+
 
         if ($request->has('technologies')) {
             $newProject->technologies()->attach($request->technologies);
         }
 
-        $newProject->save();
 
         if ($request->hasFile('image')) {
             $path = Storage::put('cover', $request->image);
-            $form_data['image'] = $path;
+            $newProject->image = $path;
         }
 
         $newProject->save();
@@ -114,6 +113,18 @@ class ProjectController extends Controller
     {
         $form_data = $request->validated();
 
+
+
+        if ($request->hasFile('image')) {
+
+            if ($project->image) {
+                Storage::delete($project->image);
+            }
+
+            $path = Storage::put('cover', $request->image);
+            $form_data['image'] = $path;
+
+        }
         $project->technologies()->sync($request->technologies);
         $project->update($form_data);
 
@@ -129,6 +140,9 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        if ($project->image) {
+            Storage::delete($project->image);
+        }
         $project->delete();
         return redirect()->route('admin.projects.index');
     }
